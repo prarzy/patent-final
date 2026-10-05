@@ -1,0 +1,125 @@
+from __future__ import annotations
+from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional
+
+
+class PipelineRequest(BaseModel):
+    idea: str
+    top_k: int = Field(default=10, ge=1, le=100)
+    gnn_mode: str = "novelty"
+    case_id: Optional[str] = None
+    case_title: Optional[str] = Field(default=None, max_length=250)
+
+
+class PipelineResponse(BaseModel):
+    query_id: str
+    query_text: str
+    nlp_result: Dict[str, Any]
+    model: str
+    top_k: int
+    results: List[Dict[str, Any]]
+    gnn_status: Optional[str] = None
+    kg_status: Optional[str] = None
+    case_id: Optional[str] = None
+    run_id: Optional[str] = None
+    persistence_status: Optional[str] = None
+    persistence_message: Optional[str] = None
+    indexed_count: Optional[int] = None
+    canonical_count: Optional[int] = None
+
+
+class EvaluateRequest(BaseModel):
+    idea: str
+    top_k: int = Field(default=10, ge=1, le=100)
+    gnn_mode: str = "novelty"
+    run_fast: bool = False
+    n_reconstruction_samples: int = Field(default=5, ge=1, le=10)
+    pipeline_result: Optional[Dict[str, Any]] = None  # pass existing hits to skip re-running pipeline
+    run_id: Optional[str] = None
+
+
+class EvaluateResponse(BaseModel):
+    persistence_status: Optional[str] = None
+    persistence_message: Optional[str] = None
+    patentability_score: float
+    patentability_raw: float
+    verdict: str
+    risk: str
+    confidence: float
+    novelty: Dict[str, Any]
+    non_obviousness: Dict[str, Any]
+    landscape: Dict[str, Any]
+    claim_breadth: Dict[str, Any]
+    timing: Dict[str, Any]
+    india_eligibility: Dict[str, Any]
+    technical_depth: Dict[str, Any]
+    weights: Dict[str, float]
+    contributions: Dict[str, float]
+    concept_count: int
+    concepts: List[Dict[str, Any]]
+    elapsed_seconds: float
+    fast_mode: bool
+
+
+class KGBuildRequest(BaseModel):
+    patent_ids: List[str] = Field(min_length=1, max_length=100)
+
+
+class KGBuildResponse(BaseModel):
+    nodes: Dict[str, int]
+    edges: Dict[str, int]
+
+
+class KGExpandRequest(BaseModel):
+    patent_ids: List[str] = Field(min_length=1, max_length=100)
+    cpc_cap: int = Field(default=10, ge=1, le=100)
+
+
+class KGExpandResponse(BaseModel):
+    family: List[Dict[str, Any]]
+    cpc_siblings: List[Dict[str, Any]]
+    total_added: int
+
+
+class KGGraphResponse(BaseModel):
+    nodes: List[Dict[str, Any]]
+    edges: List[Dict[str, Any]]
+
+
+class AnalysisCaseCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=250)
+    idea_text: str = Field(min_length=1)
+
+
+class AnalysisCaseUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=250)
+    idea_text: Optional[str] = Field(default=None, min_length=1)
+    status: Optional[str] = None
+
+
+class AnalysisCaseResponse(BaseModel):
+    case_id: str
+    title: str
+    idea_text: str
+    status: str
+    created_at: Any
+    updated_at: Any
+    runs: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class ReportResponse(BaseModel):
+    report: str
+    rows: List[Dict[str, Any]]
+
+
+class AnalysisRunResponse(BaseModel):
+    case_id: str
+    run_id: str
+    case_title: str
+    idea_text: str
+    top_k: int
+    gnn_mode: str
+    started_at: Any
+    pipeline_result: Optional[PipelineResponse] = None
+    evaluation_result: Optional[Dict[str, Any]] = None
+    improvement_result: Optional[Dict[str, Any]] = None
