@@ -1,6 +1,9 @@
 import { Routes, Route } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
+import { MotionConfig } from 'framer-motion'
 import RootLayout from './layouts/RootLayout'
+import RequireAuth from './auth/RequireAuth'
+const AuthPage = lazy(() => import('./pages/AuthPage'))
 
 const LandingPage             = lazy(() => import('./pages/LandingPage'))
 const IdeaInputPage           = lazy(() => import('./pages/IdeaInputPage'))
@@ -15,17 +18,21 @@ const CaseHistoryPage         = lazy(() => import('./pages/CaseHistoryPage'))
 
 function LoadingFallback() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#080d18' }}>
-      <div style={{ width: 32, height: 32, border: '2px solid #6366f1', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    <div className="route-loading" role="status">
+      <span className="loading-spinner" aria-hidden="true" /><span>Opening workspace…</span>
     </div>
   )
 }
 
 export default function App() {
   return (
+    <MotionConfig reducedMotion="user">
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         <Route path="/"         element={<LandingPage />} />
+        <Route path="/login" element={<AuthPage key="login" />} />
+        <Route path="/signup" element={<AuthPage key="signup" signup />} />
+        <Route element={<RequireAuth />}>
         <Route path="/analyze"  element={<IdeaInputPage />} />
         <Route path="/pipeline" element={<PipelineProgressPage />} />
         <Route element={<RootLayout />}>
@@ -37,7 +44,9 @@ export default function App() {
           <Route path="/results/improvements" element={<ImprovementAgentPage />} />
           <Route path="/results/cases"        element={<CaseHistoryPage />} />
         </Route>
+        </Route>
       </Routes>
     </Suspense>
+    </MotionConfig>
   )
 }
